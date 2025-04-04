@@ -1,0 +1,103 @@
+---
+subtitle: "Writing R Functions"
+date: today
+author: 
+  - Team member Jakir Hossain
+  - Team member Syeda Noor ul Saba Bukhari
+execute:
+  error: true
+  eval: true
+unnumbered: true
+embed-resources: true
+format: pdf
+---
+
+# Practical 1 - bonus {.unnumbered}
+
+Download the [raw document here](https://github.com/loreabad6/app-dev-gis/blob/main/practicals/Practical1-bonus/Practical1-bonus-Writing-Functions.qmd)  
+
+This activity will ask you to write several small functions, then use them to unscramble a message.
+
+---
+
+## Part One: Create your functions  
+
+Many of the functions have been started for you below, but none of them are complete as-is.
+
+### 1. Function: `divide_and_round()`  
+This function takes a numeric vector, divides each element by the smallest value in the vector, and rounds the result.
+
+```{r}
+divide_and_round <- function(nums) {
+  my_min <- min(nums, na.rm = TRUE)  # Find the smallest value
+  divided <- nums / my_min           # Divide each element by the smallest value
+  rounded <- round(divided)          # Round to the nearest whole number
+  return(rounded)
+}
+```
+
+### 2. Function: `no_nines_or_twelves()`  
+This function checks if numbers are **not** divisible by 9 or 12.
+
+```{r}
+no_nines_or_twelves <- function(nums) {
+  check <- !(nums %% 9 == 0 | nums %% 12 == 0)  # Exclude numbers divisible by 9 or 12
+  return(check)
+}
+```
+
+### 3. Function: `every_other()`  
+This function selects every other element from a vector.
+
+```{r}
+every_other <- function(vec, start = 1) {
+  if (!start %in% c(1, 2)) {
+    stop("start must be 1 or 2")
+  }
+  return(vec[seq(start, length(vec), by = 2)])
+}
+```
+
+### 4. Function: `shorten()`  
+This function removes elements from the start until the sum of the vector is less than 350.
+
+```{r}
+shorten <- function(vec) {
+  while (sum(vec) >= 350 && length(vec) > 0) {
+    vec <- vec[-1]  # Remove first element
+  }
+  return(vec)
+}
+```
+
+---
+
+## Part Two: Your functions are the key  
+
+Now, apply the functions step by step:
+
+```{r}
+my_vec <- c(39, 1.87, 48, 11, 8, 45, 21, 5, 12, 33, 9, 11, 108, 4, 18, 5, 16, 17, 8, 48, 27, 24, 4, 22, 12, 27, 23, 46, 42, 35, 15, 34, 36, 26, 18, 10, 18.21, 72.04, 36.9, 41.81, 29, 89.75, 34.03, 20.18, 48.74, 15.76, 31.86, 83.6, 43.55, 39.99, 23.55, 8.54, 24.71, 22.02, 9.71, 62.14, 35.46, 16.61, 15.66, 21.29, 30.52, 201.07, 45.81, 7.85, 30.13, 34.14, 22.62, 10.2, 6.02, 30.12, 10.64, 31.72, 24.57, 14.43, 43.37, 89.93, 44.72, 51.32, 13.62, 45.56, 22.96, 7.05, 29.99, 41.38, 26.59, 23.04, 19.82, 50.73, 39.56, 43.79, 30.22, 85.85, 5.78, 78.85, 29.52, 66.27, 44.06, 27.28, 24.43, 64.32, 3.35, 67.45, 46.72, 48.44, 48.65, 33.3, 40.28, 19.04)
+
+my_vec <- every_other(my_vec, start = 2)
+my_vec <- divide_and_round(my_vec)
+my_vec <- every_other(my_vec, start = 1)
+my_vec <- shorten(my_vec)
+my_vec <- my_vec[no_nines_or_twelves(my_vec)]  # Keep values NOT divisible by 9 or 12
+
+my_vec <- sort(my_vec)
+
+my_vec  # Should return six numbers
+```
+
+If you have done everything correctly, the final vector should contain six numbers.
+
+**Google these six numbers to find the name of the TV show.**
+
+::: callout-note
+## Solution 🎉
+
+The TV show is **LOST**.
+:::
+
+
