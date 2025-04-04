@@ -1,0 +1,117 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+# Install packages (uncomment the lines if not already installed)
+# remotes::install_github("luukvdmeer/sfnetworks")
+# install.packages("tidygraph")
+# install.packages("ggraph")
+# install.packages("dodgr")
+
+# Call the libraries
+library(sf)
+library(sfnetworks)
+library(tidygraph)
+library(tidyverse)
+library(ggraph)
+library(dodgr)
+
+# Assume `roxel` is a network object; check its class
+# Make sure 'roxel' is a valid spatial network (sf or sfnetwork type)
+sfn = as_sfnetwork(roxel, directed = FALSE) |> 
+  st_transform(3035)  # Transform to appropriate CRS
+
+# Visualize the spatial network
+plot(sfn)
+
+# Create random facilities and sites, map them to network indices
+set.seed(9284)
+bbox = st_convex_hull(st_combine(sfn))  # Convex hull around the network
+rdm_fac = st_sample(bbox, 5)  # Random sample of 5 points within the bounding box
+
+# Ensure facilities are in 'sf' format
+rdm_fac_nodes = st_as_sf(rdm_fac) |> 
+  mutate(from = st_nearest_feature(rdm_fac, st_as_sf(sfn, "nodes")))  # Nearest feature from the network nodes
+
+# Create random sites within the bounding box
+rdm_sites = st_sample(bbox, 50)  # Random sites within the bounding box
+
+# Compute shortest paths between facilities and their closest sites using dodgr
+paths = st_network_paths(
+  sfn,
+  from = rdm_fac_nodes,  # Ensure facilities are in 'sf' format
+  to = rdm_sites,
+  router = "dodgr"
+) |> 
+  group_by(to) |> 
+  filter(cost == min(cost))  # Filter for minimum cost path
+
+# Visualize the shortest trip to the closest facility
+ggraph(sfn, layout = "sf") +
+  geom_edge_sf(color = "grey") +  # Network edges in grey
+  geom_node_sf(color = "grey") +  # Network nodes in grey
+  geom_sf(
+    data = paths,
+    aes(color = as.factor(from)),  # Color paths by facility
+    linewidth = 1,
+    show.legend = FALSE
+  ) +
+  geom_sf(data = rdm_sites, color = "black", size = 1) +  # Sites in black
+  geom_sf(
+    data = rdm_fac_nodes, 
+    aes(fill = as.factor(from)),  # Fill by facility for visibility
+    size = 3,
+    pch = 21,
+    show.legend = FALSE
+  ) +
+  theme_void()
+
+# Sentinel Data Time Range
+# Example: Filter Sentinel-2 data for Islamabad, Pakistan (from 2016 onward)
+time_extent = c("2016-01-01", "2023-12-31")  # Set time range for Sentinel-2 data
+
+# Assuming you are connecting to a STAC API and filtering Sentinel-2 data
+lon <- 73.0551
+lat <- 33.6844
+point <- st_sfc(st_point(c(lon, lat)), crs = 4326)
+
+# Perform STAC search (example query, ensure client setup is correct)
+client <- stac("https://earth-search.aws.element84.com/v1")
+
+# Search Sentinel-2 data
+items <- client |>
+  stac_search(
+    collections = "sentinel-2-l2a",
+    intersects = point,
+    datetime = paste0(time_extent, "T00:00:00Z", collapse = "/"),
+    limit = 100
+  ) |>
+  post_request()
+
+# Visualize the results using the same shortest facility analysis framework
+
+```
